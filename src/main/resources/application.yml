@@ -1,1 +1,9 @@
+logging:
+  level:
+    mapper: DEBUG
+    org.springframework.web: DEBUG
 
+mybatis:
+  mapper-locations: mapper/*.xml
+  configuration:
+    map-underscore-to-camel-case=true:
