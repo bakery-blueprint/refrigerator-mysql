@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--<mapper namespace="com.github.blueprint.refrigerator.mysql.ProductMapper">-->
+<mapper namespace="mapper.ProductRepository">
+
+  <select id="selectProductById" resultType="com.github.blueprint.refrigerator.mysql.Product">
+        SELECT prod_id
+              ,prod_name
+              ,prod_price
+        FROM products
+        WHERE prod_id = #{prodId}
+    </select>
+
+  <select id="selectAllProducts" resultType="com.github.blueprint.refrigerator.mysql.Product">
+        SELECT prod_id
+              ,prod_name
+              ,prod_price
+        FROM products
+    </select>
+
+  <insert id="insertProduct" parameterType="com.github.blueprint.refrigerator.mysql.Product">
+      INSERT INTO products (prod_name, prod_price)
+      VALUES (#{prodName}, #{prodPrice})
+    </insert>
+
+</mapper>
