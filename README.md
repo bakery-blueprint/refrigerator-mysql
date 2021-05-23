@@ -30,3 +30,6 @@
 최소 5일전 변경 가능 
 
 
+## 0주차 
+
+https://github.com/bakery-blueprint/refrigerator-mysql/tree/master/docs/0%EC%A3%BC%EC%B0%A8
