@@ -97,7 +97,30 @@ ORDER BY  sub.`rank`
 
 -- 185. Department Top Three Salaries
 
+WITH salary AS
+(
+                SELECT DISTINCT salary,
+                                departmentid
+                FROM            employee )
 
-
+SELECT    d.NAME AS department,
+          e.NAME AS employee,
+          e.salary
+FROM      employee e
+LEFT JOIN department d
+ON        e.departmentid = d.id
+LEFT JOIN
+          (
+                 SELECT s.salary,
+                        s.departmentid,
+                        (
+                               SELECT Count(sub.salary )
+                               FROM   salary sub
+                               WHERE  sub.salary > s.salary
+                               AND    sub.departmentid = s.departmentid ) + 1 AS`rank`
+                 FROM   salary s) sub
+ON        e.salary = sub.salary
+AND       e.departmentid = sub.departmentid
+WHERE     sub.`rank` <= 3
 
 
