@@ -7,4 +7,4 @@ SELECT sale_date
                                           WHERE s.sale_date = x.sale_date 
                                                 AND fruit = 'oranges') AS 'diff' 
   FROM sales s 
- GROUP BY s.sale_date; 
+ GROUP BY s.sale_date;
