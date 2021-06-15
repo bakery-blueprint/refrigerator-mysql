@@ -77,3 +77,5 @@ FROM Install I
 GROUP BY I.install_date
 ;
 
+
+# DATE 함수를 사용하는 게 더 빠르다.
