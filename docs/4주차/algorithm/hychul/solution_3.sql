@@ -1,8 +1,5 @@
 SELECT
     u.user_id AS seller_id,
-    # u.favorite_brand,
-    # i.item_brand,
-    # o.rank,
     CASE WHEN u.favorite_brand = i.item_brand THEN 'yes' ELSE 'no' END AS 2nd_item_fav_brand
 FROM
     Users u
