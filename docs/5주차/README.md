@@ -439,15 +439,55 @@ SHOW PROFILES;
 - MATCH() ... AGAINST() 구문을 사용
 - 영문 대소문자 구분이 필요시, 전문 검색 대상 컬럼의 콜레이션을 "_bin"이나 "_cs"계열로 변경
 ##### 자연어 모드
+```sql
+CREATE TABLE ft_article (
+  doc_id INT NOT NULL,
+  doc_title VARCHAR(1000) NOT NULL,
+  doc_body TEXT,
+  PRIMARY KEY (doc_id),
+	FULLTEXT KEY fx_article (doc_title,doc_body)
+	
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
+INSERT INTO ft_article VALUES
+(1, 'it is possible', 'it is possible to subpartition tables that are partitioned by RANGE or LIST'),
+(2, 'Subpartitions may', 'Subpartitions may use either HASH or KEY partitioning'),
+(3, 'This is also', 'This is also known as composite partitioning'),
+(4, 'SUBPARTITION BY HASH', 'SUBPARTITION BY HASH and SUBPARTITION BY KEY generally follow the same syntax rules'),
+(5, 'An exception', 'An exception to this is that SUBPARTITION BY KEY (unlike PARTITION BY KEY)');
+
+select * from ft_article fa 
+where MATCH (doc_title ,doc_body) AGAINST('key hash')
+;
+```
+- 입력된 검색어에서 키워드를 추출한 뒤에 키워드를 포함 하느 레코드를 검색하는 방법
+- 자연어 검색모드에서는 전체 테이블에서 50%이상의 레코드가 검색왼 키워드를 가지고있으면, 검색어로 의미가 없다고 판단하고 검색 결과에서 배제
+- 전문 검색 엔진을 사용할때 MATCH()의 괄호 안에는 만들어진 전문 인덱스에 포함된 모든 컬럼이 명시되어야함
 
 ##### 불리언 모드 
+- 각 키워드의 포함 및 불포함 비교를 수행하고, 그 결과를 TRUE or FALSE 형태로 연산해서 최종 일치 여부를 판단하는 검색 방법
+> \+ : 키워드 앞에 '+' 연산자가 표시되면 AND 연산을 의미
+<br> \- : 키워드 앞에 '-'가 표시되면 NOT 연산을 의미
+<br> 연산자 없음 : 만약 키워드 앞에 아무 연산자도 명시되지 않고, 키워드만 명시되면 OR 연산을 의미
 
+```sql
+select * from ft_article fa 
+where MATCH (doc_title,doc_body) against('+hash +syntax' in boolean mode)
 
+select * from ft_article fa 
+where MATCH (doc_title,doc_body) against('+hash -syntax' in boolean mode)
+
+select doc_id ,doc_title , doc_body ,
+		MATCH (doc_title,doc_body) against('hash syntax' in boolean mode) as match_scord
+from ft_article fa 
+where MATCH (doc_title,doc_body) against('hash syntax' in boolean mode)
+
+```
 ### 8.1.3. 트리톤 전문 검색
 ### 8.1.4. mGroonga 전문 검색
 
 ## 8.2. 공간검색
 ### 8.2.1. R-Tree 인덱스를 사용하는 이유
+
 ### 8.2.2. 위도나 경도 정보를 이용한 거리 계산
 ### 8.2.3. R-Tree를 이용한 위치 검색
