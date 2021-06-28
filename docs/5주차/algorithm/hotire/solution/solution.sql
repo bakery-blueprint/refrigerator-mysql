@@ -27,3 +27,14 @@ HAVING
 sum(case when NAME = 'Milk' then 1 else 0 end) > 0 AND
 sum(case when NAME = 'Yogurt' then 1 else 0 end) > 0
 
+or
+
+SELECT CART_ID
+FROM CART_PRODUCTS
+GROUP BY CART_ID
+HAVING
+count(case when NAME = 'Milk' then 1 end) > 0 AND
+count(case when NAME = 'Yogurt' then 1 end) > 0
+
+
+
