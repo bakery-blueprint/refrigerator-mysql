@@ -488,6 +488,7 @@ where MATCH (doc_title,doc_body) against('hash syntax' in boolean mode)
 
 ## 8.2. 공간검색
 ### 8.2.1. R-Tree 인덱스를 사용하는 이유
-
+- 데이터의 분포도가 어떻게 되어있고, 그에 맞게 인덱스를 설계하기란 쉽지 않아서 R-TREE를 쓰면 데이터의 분포에 최적으로 작동
+- 데이터의 건수에 따라서 R-TREE,B-TREE를 결정해서 사용을 해야할듯 
 ### 8.2.2. 위도나 경도 정보를 이용한 거리 계산
 ### 8.2.3. R-Tree를 이용한 위치 검색
