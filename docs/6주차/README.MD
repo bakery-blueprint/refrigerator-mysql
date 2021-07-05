@@ -281,3 +281,472 @@ PARTITION BY LIST (category_id) (
     )
 ```
 
+- PARTITION BY LIST 키워드로 생성
+- PARTITION BY LIST 뒤에 파티션 키 정의
+- VALUES IN (3)을 사용해 키 값의 목록 나열
+
+
+#### 리스트 파티션의 분리와 병합
+- 레인지 파티션의 추가, 삭제, 병합 작업이 모두 같음
+- 병합과 분리 또한 같음
+
+#### 리스트 파티션 주의 사항
+- 명시되지 않은 나머지 값을 저장할 방법이 없음 
+- NULL 저장 파티션 별도 생성 가능
+
+### 10.3.3 해시 파티션
+- MySQL에서 정의한 해시 함수에 의해 레코드가 저장될 파티션을 결정하는 방법
+- 파티션 표현식의 결과값을 파티션의 개수로 나눈 나머지로 저장될 파티션을 결정하는 방식
+- 파티션 키는 항상 정수 타입의 칼럼이거나 정수를 반환하는 표현식만 사용될 수 있다.
+- 파티션을 추가하거나 삭제하는 작업에는 테이블 전체 적으로 레코드를 재분배 한다.
+
+#### 해시 파티션의 용도
+- 레인지 파티션이 리스트 파티션으로 데이터를 균등하게 나누는 것이 어려울 때
+- 테이블의 모든 레코드가 비슷한 사용 빈도를 보이지만 테이블이 너무 커서 파티션을 적용해야 할 때
+
+#### 해시 파티션 테이블 생성
+```sql
+-- // 파티션 개수만 지정할 때
+create table tb_partition (
+    fd1 int not null ,
+    fd2 int not null ,
+    fd3 int not null ,
+    unique key (fd1, fd2, fd3),
+    unique key (fd3)
+) PARTITION BY HASH ( fd3)
+PARTITIONS 4;
+-- // 파티션 이름 별도 지정
+create table tb_partition (
+    fd1 int not null ,
+    fd2 int not null ,
+    fd3 int not null ,
+    unique key (fd1, fd2, fd3),
+    unique key (fd3)
+) PARTITION BY HASH ( fd3)
+PARTITIONS 4 (
+    PARTITION p0 ENGINE=INNODB,
+    PARTITION p1 ENGINE=INNODB,
+    PARTITION p2 ENGINE=INNODB,
+    PARTITION p3 ENGINE=INNODB
+    );
+```
+
+- PARTITION BY HASH 키워드로 파티션 종류 지정
+- PARTITION BY HASH 키워드 뒤에 키 명시
+- PARTITIONS n 으로 몇 개의 파티션을 생성할 것인지 명시
+  
+#### 해시 파티션의 분리와 병합
+- 분리와 병합시 모든 레코드를 재분배 하는 작업이 필요함
+- 전체적인 파티션이 영향을 받음
+
+- **해시 파티션 추가**
+- 파티션 개수의 의해 파티션 알고리즘이 변하는 것이어서 모든 레코드가 재배치되야 함
+```sql
+-- // 단순 파티션 수만 명시
+ALTER TABLE tb_partition ADD PARTITION PARTITIONS 8;
+```
+
+- **해시 파티션 삭제**
+- 어떤 데이터를 특정할 수 없기 때문에 삭제하는 작업은 의미도 없고 해서도 안 될 작업
+  
+
+- **해시 파티션 분할**
+- 분할 기능 없음
+
+- **해시 파티션 병합**
+- 통합 기능 없음
+
+
+#### 해시 파티션 주의 사항
+- 특정 파티션 drop 불가능
+- 새로운 파티션 추가 작업은 데이터 재배치가 일어남
+
+
+### 10.3.4 키 파티션
+- 해시 파티션과 사용법과 특성이 거의 같음
+- 해시 파티션은 해시 대상 컬럼이나 표현식을 사용자가 지정하지만 키 파티션은 모든것을 MySQL 서버가 수행
+
+
+
+#### 키 파티션 생성
+```sql
+create table tb_partition (
+                              fd1 int not null ,
+                              fd2 int not null ,
+                              fd3 int not null ,
+                              unique key (fd1, fd2, fd3),
+                              unique key (fd3)
+) PARTITION BY KEY();
+```
+- PARTITION BY KEY 키워드로 정으 
+- PARTITION BY KEY 뒤 키 칼럼 명시 가능, 아무것도 없으면 프라이머리 키나 유니크 키를 자동 배정
+- PARTITIONS 키워드로 생성 개수 지정
+
+### 10.3.5 리니어 해시 파티션/리니어 키 파티션
+- 해시/키 파티션은 전체 레코드 재분배 작업이 발생
+- 이것을 최소화 하기 위해 2의 승수 알고리즘을 이용한 리니어 파티션이 있음
+- 일반적인 해시/키 파티션 보다는 건수가 덜 균등해질 수 있음
+
+### 10.3.6 서브 파티션
+- 예를 들면 레인지 파티션을 생성하고 그 파티션 내에서 다시 지역별로 서브 파티션을 구현 가능 
+- MySQL에서는 최대 파티션 수가 제한적이라 이점이 별로 없음
+
+### 10.3.7 파티션 테이블의 실행 계획
+- 모든 파티션이 검색 대상인지 아니면 일부의 파티션만 읽는지는 성능에 큰 영향을 끼침
+- 필요한 파티션만을 걸러내는 과정을 파티션 프루닝이라고 하는데, 쿼리의 성능은 테이블에서 얼마나 많은 파티션을 프루닝 할 수 있는지가 관건이다.
+- 프루닝 정보를 확인하기 위해서는 explain partitions 사용해야 한다.
+
+- explain partitions 명령으로 쿼리 실행 계획을 확인하면 'partitions' 라는 컬럼이 표시됨
+- 프루닝을 사용하지 못하면 여기에 모든 파티션 이름이 명시
+- 예측했던 파티셔니 맞는지 확인 필요
+
+### 10.3.8 파티션 테이블 관련 벤치마킹
+
+#### 테이블 크기
+- 파티션을 사용했을 때 디스크의 공간적인 이점은 없음 
+
+#### INSERT 성능 테스트
+- 더 빠른 속도를 보여줌
+- 다만 파티션이 많은 테이블은 앞에서 설명한 잠금 이슈로 인해서 오히려 속도가 떨어질 수 있음
+
+#### SELECT 성능 테스트
+- 최적화 상태라면 큰 성능 차이는 보여주지 않음
+
+### 10.3.9 파티션 기능에 대한 결론
+- select 쿼리 성능에는 그다지 큰 도움을 주지 못한
+- 쓰기 성능에는 어느 정도 도움이 됨 
+- insert 나 delete와 같은 쓰기 작업이 심각하게 느려지고 있다면 파티션 적용을 고려해 보는 것도 좋다.
+
+# 11. 스토어드 프로그램
+- 스토어드 루틴은 스토어드 프로시저, 함수, 트리거, 이벤트 등을 모두 아우르는 명칭
+
+## 11.1 스토어드 프로그램 장단점
+
+### 11.1.1 스토어드 프로그램 장점
+#### 데이터베이스의 보안 향상
+- 특정 테이블의 일기와 쓰기 도는 컬럼에 대해서만 권한을 설정할 수 있다.
+#### 기능의 추상화
+- 특정 기능을 여러 가지 언어로 개발할 필요가 없이 스토어드 프로그램으로 구현 가능
+#### 네트워크 소요시간 절감
+- 반복적인 쿼리 작업을 스토어드 프로그램으로 작업 한다면 네트워크 소요 시간을 절감할 수 있다.
+
+#### 절차적 기능 구현
+- 절차적 기능을 구현할 수 있다.
+#### 개발 업무의 구분
+- 구현된 기능을 api 처럼 사용 가능
+
+### 11.1.2 스토어드 프로그램 단점
+####  낮은 처리 성능
+- MySQL 은 절차적 코드 처리 목적이 아니므로 처리 성능이 다른 프로그램 언어에 비해 상대적으로 떨어짐
+
+#### 애플리케이션 코드의 조각화
+- 기능이 언어 레벨의 어플리케이션과 MySQL 스토어드 프로그램으로 분산된다면 관리가 힘듬
+
+## 11.2 스토어드 프로그램의 문법
+  
+### 11.2.1  예제 테스트 시 주의 사항
+- 공백 설정
+- 스레드 스택 크기 설정
+
+### 11.2.2 스토어드 프로시저
+- 서로 데이터를 주고 받아야 하는 여러 쿼리를 하나의 그룹으로 묶어서 독립적으로 실행하기 위해 사용
+- 배치에서 첫번째 쿼리 결과를 이용해서 두 번째 쿼리를 실행해야 할때가 대표적이다.
+- 스토어드 프로시저는 반드시 독립적으로 호출돼야 하며 select나 update 같은 sql 문장에서 스토어드 프로시저를 참조할 수 없다.
+
+#### 스토어드 프로시저 생성 및 삭제
+- create procedure 명령으로 생성
+```sql
+create procedure sp_sum(IN param1 INTEGER, IN param2 INTEGER, OUT param3 INTEGER )
+BEGIN
+    SET param3 = param1 + param2;
+end;
+```
+- 스토어드 프로시저는 기본 반환값이 없다. 즉 프로시저 내부에서 RETURN 명령을 사용할 수 없다.
+- 각 파라미터는 in, out, inout 타입을 가진다.
+- in 파라미터는 프로시저 내부에서 읽기 전용, out 은 값을 전달하는 용도, inout 은 모두 가능
+- 프로시저를 변경할 때는 alter procedure, 삭제할 때는 drop procedure를 사용
+- 처리 내용 및 파라미터를 변경할 때는 alter 은 사용불가능
+- 그렇기 때문에 삭제한 후 다시 생성하는 것이 유일한 방법
+
+#### 스토어드 프로시저 실행
+- select 쿼리에서 사용 불가능
+- call 명령어로 실행
+```sql
+set @result:=0;
+select @result;
+
+call sp_sum(1, 2, @result);
+select @result;
+```
+
+- 마지막 out 타입 파라미터는 값을 넘겨받아야 하기 때문에 세션변수를 사용해야 한다.
+
+
+#### 스토어드 프로시저의 커서 반환
+- 프로시저 내부에서 커서를 오픈하지 않거나 select쿼리의 결과 셋을 패치하지 않으면 해당 쿼리의 결과 셋은 클라이언트로 바로 전송된다.
+- 해당 방법을 통해 로그를 대체하여 값을 화면에 표시하도록 할 수 있다.
+
+### 11.2.3 스토어드 함수
+- 스토어드 함수는 하나의 sql 문장으로 작성이 불가능한 기능을 하나의 sql 문장으로 구현해야 할 때 사용한다.
+- 독립적으로 실행 가능하다면 프로시저를 사용하자
+- 프로시저에 비해 유일한 장점은 SQL 문장으로 사용 할 수 있다는 것
+
+#### 스토어드 함수 생성 및 삭제
+- create function 명령어로 생성 가능
+- 모든 입력 파라미터는 읽기 전용이라 in/out 명령어 불필요
+- returns 키워드로 반환되는 값의 타입을 명시해야 함
+```sql
+create function sf_sun(param1 integer, param2 integer)
+returns integer
+begin
+    declare param3 integer default 0;
+    set param3 = param1 + param2;
+    return param3;
+end;
+
+```
+
+- 프로시저와 다른점
+  - returns 로 반환 타입을 명시
+  - 정의에 지정한 타입과 동일한 타입의 값을 return 명령으로 반환
+
+- 단순 select 쿼리만을 실행해서는 안된다.
+- 프로시저와 동일하게 alter 문을 통해 파라미터나 내용은 변경 못하고 스토어드 함수의 특성만 변경 가능
+
+#### 스토어드 함수 실행
+```sql
+select sf_sun(1, 2) as sum;
+```
+
+### 11.2.4 xmflrj
+- 레코드가 저장되거나 변경될 때 미리 정의해둔 작업을 자동으로 실행해주는 스토어드 프로그램
+- 테이블 레코드가 insert/update/delete 될 때 설정 가능
+- 사실 필요성이 많이 떨어짐
+- 테이블에 대해서만 생성 가능
+- 해당 테이블에 발생하는 조작에 대해 지정된 시점에 트리거 루틴 실행
+
+#### 트리거 생성
+- create trigger 명령어로 실행
+- before이나 after 키워드로 이벤트를 명시할 수 있음
+```sql
+create trigger on_delete before delete on employees
+    for each row
+begin
+    delete from salaries where emp_no = old.emp_no;
+end;
+```
+
+- truncate / drop table 에서는 이벤트 발생 안함
+- new / old 객체 사용가능, 각 객체는 변겨되기 이후와 이전 컬럼 값을 가지고 있다.
+
+#### 트리거 실행
+- 명시적 실행 방법은 없음
+- 데이터 insert, delete, update 를 수행해서 작동을 확인
+
+### 11.2.5 이벤트
+- 특정한 시간에 스토어드 프로그램을 실행할 수 있는 스케줄러 기능을 이벤트라고 한다.
+
+
+#### 이벤트 생성
+- 일회성 이벤트와 반복성 이벤트가 있음
+
+```sql
+-- // 반복성 이벤트, 2011년 말까지 반복해서 실행하는 daily_ranking 이벤트
+create event daily_ranking
+    on schedule every 1 day starts '2011-01-01 01:00:00' ends '2011-12-31 12:59:59'
+do
+    insert into daily_ranking_log values(now(), 'Done');
+
+-- // 일회성 이벤트, 1시간 뒤에 실행될 이벤트 등록
+create event onetime_job
+    on schedule at current_timestamp + interval 1 hour 
+do
+    insert into daily_ranking_log values(now(), 'Done');
+```
+
+- do 절에서는 하나의 쿼리나 스토어드 프로시저를 호출할 수 있고, begin...end 로 구성된 복합 절을 사용할 수 있다.
+
+#### 이벤트 실행 및 결과 확인
+- 스케줄링 결과나 실행 시간 정보는 mysql db의 event 테이블을 통해 조회하거나 INFORMATION_SCHEMA.event 테이블을 통해 조회할 수 있다.
+- 하지만 두 테이블 데이터가 조금 차이가 나는데 그 이유는 타임존이 조금씩 다르기 때문이다.
+
+### 11.2.6 스토어드 프로그램 본문 (Body) 작성
+#### BEGIN ...END 블록과 트래잭션
+- 하나의 BEGIN ...END 블록은 또다른 BEGIN ...END 블록을 포함할 수 있음
+- BEGIN ...END 블록에서 주의해야 할 것은 트랜잭션 처리다.
+- BEGIN ...END 블록에서 트랜잭션 시작은 'BEGIN' 명령어가 아니라 'START TRANSACTION' 을 사용
+- 스토어드 프로시저나 이벤트의 본문에서만 트랜잭션을 사용할 수 있음
+
+#### 프로시저 내부에서 트랜잭션 완료
+- 내부에서 commit 이나 rollback 명령으로 트랜잭션을 완료하면 프로시저 외부에서 commit 이나 rollback 을 실행해도 의미가 없음
+
+#### 프로시저 외부에서 트랜잭션 완료
+- 내부와 동일하게 정상 작동
+- 스토어드 프로시저 내부에서 트랜잭션을 완료할지, 호출하는 클라이언트에서 확인 과정을 거친 후에 커밋이나 롤백할지 고민해야 함
+
+#### 변수
+- 프로그램의 BEGIN ...END 블록 사이에서 사용하는 변수는 사용자 변수와 다르므로 혼동하지 않도록 주의 하자
+- BEGIN ...END 변수를 로컬 변수라고 한다면 로컬 변수는 프로그램 내에서만 사용할 수 있다.
+- 로컬 변수는 DECLARE 명령으로 정의되고 타입도 명시해야 한다.
+- **DECLARE** 
+  - 로컬 변수를 정의 하기 위한 명령어
+  - 디폴트 값을 명시하지 않으면 NULL
+  - 타입도 반드시 필요
+
+- **SET**
+  - DECLARE 로 정의한 변수에 값을 할당하는 명령어
+
+- **SELECT ...INTO**
+  - SELECT 한 값을 로컬 변수에 할당하는 명령어
+
+- 변수 우선순위
+  - DECLARE 로 정의한 변수 
+  - 스토어드 프로그램의 입력 파라미터
+  - 테이블의 컬럼
+
+- 구분하기 위해 프리픽스를 사용하는것도 좋은 방법이다.
+
+#### 제어문
+- 대부분의 프로그래밍 언어와 흡사함
+  
+- **IF ... ELSEIF ... ELSE ... END IF**
+```sql
+create function sf_greatest(p_value1 int, p_value2 int)
+    returns int
+begin
+    if p_value1 is null then
+        return p_value2;
+    elseif p_value2 is null then
+        return p_value1;
+    elseif p_value1 >= p_value2 then
+        return p_value1;
+    else
+        return p_value2;
+    end if;
+end;
+```
+
+
+- **CASE WHEN ... THEN ... ELSE ... END CASE**
+```sql
+create function sf_greatest2(p_value1 int, p_value2 int)
+    returns int
+begin
+    CASE
+        WHEN p_value1 is null then
+            return p_value2;
+        WHEN p_value2 is null then
+            return p_value1;
+        WHEN p_value1 >= p_value2 then
+            return p_value1;
+        else
+            return p_value2;
+end case ;
+end;
+```
+
+- **반복 루프**
+- loop 구분에서는 반복문을 벗어나려면 leave 명령어 사용
+- repeat 은  do while 과 유사
+- while 구문은 일반적인 프로그래밍 언어와 유사
+
+#### 핸들러와 컨디션을 이용한 에러 핸들링
+- 안정적이고 견고한 스토어드 프로그램은 반드시 핸들러를 이용한 예외 처리를 해야함 
+
+- **SQLSTATE와 에러 번호**
+- 보통  'ERROR ERROR-NO (SQL-STATE) : ERROR-MESSAGE' 형태를 보임
+- ERROR-NO
+  - MySQL 에서만 유효한 식별 번호
+- SQL-STATE
+  - DBMS가 다르다고 하더라도 ANSI SQL 표준을 준수한 DBMS라면 모두 똑같은 의미를 가짐
+- SQL-STATE로 핸들러를 정의 하는게 더 좋음
+
+#### 핸들러
+  
+- DECLARE ... HANDLER 구문을 이용해 정의
+```sql
+DECLARE handler_type HANDLER
+    FOR condition_value [,condition_value]...
+    handler_statments
+```
+- handler_type이 continue로 정의되면 handler_statments를 실행하고 스토어드 프로그램의 마지막 실행 지점으로 다시 돌아가서 코드 처리
+- handler_statments exit 로 정의 됐따면 이 핸들러가 정의된 begin ... end 불럭을 벗어남
+- condition_value 같은 경우 여러 가지 형태의 값이 사용 가능
+  - SQLSTATE sqlstate_value를 사용하면 SQLSTATE 일치할 때 실행되는 핸들러를 정의
+- SQLWARNING 키워드는 코드를 실행하던 중 경고가 발생했을 때 실행 되는 핸들러를 정의
+- NOT FOUND 키워드는 SELECT 건수가 1도 없을 때 발생
+- SQLEXCEPTION 은 NOT FOUN, 정상처리 로 시작하는 SQLSTATE 외에 모든 케이스를 의미
+- 사용자 정의 condition 정의 가능
+
+#### 컨디션
+
+- 핸들러는 이베트가 발생했을 때 실행할지를 명시하는 여러 가지 방법이 있는데 그 중 하나가 컨디션이다.
+- SQLSTATE 는 가독성 측면에서 별로이다. 어떤 의미인지 조건의 이름을 등록하는 것이 컨디션이다ㅏ.
+- SQLWARNING, NOT FOUND, SQLEXCEPTION 은 MySQL 에서 미리 만들어둔 컨디션이다.
+  
+
+#### 시그널을 이용한 예외 발생(MySQL 5.5 이상)
+- 예외를 사용자가 직접 발생시킬 수 있는 기능
+- java와 비교하면 핸들러는 catch 구문이고 시그널은 throw 구문에 해당한다.
+
+#### 스토어드 프로그램의 BEGIN ... END 블럭에서 SINGLE 사용
+```sql
+create function sf_devide (p_dividend int, p_divisor int)
+returns int
+begin
+    declare null_divisor condition for SQLSTATE '45000';
+
+    if p_divisor is null then
+        SIGNAL null_divisor set message_text = 'Divisor can not be null', MYSQL_ERRNO=9999;
+    elseif p_divisor = 0 then
+        SIGNAL sqlstate '45000' set message_text = 'Divisor can not be 0', MYSQL_ERRNO=9998;
+    elseif p_dividend is null then
+        SIGNAL sqlstate '01000' set message_text = 'Dividend is null, so regarding dividend as 0', MYSQL_ERRNO=9997;
+    return 0;
+    end if;
+
+    return floor(p_dividend / p_divisor);
+end;
+
+```
+
+
+#### 핸들러 코드에서 SIGNAL 사용
+- 핸들러에서 SIGNAL명령어를 사용해서 발생된 에러나 예외를 다른 사용자 정의 예외로 변환해서 다시 던지는 것도 가능
+
+
+#### 커서
+- 스토어드 프로그램의 커서는 JDBC 프로그램에서 자주 사용하는 ResultSet이다.
+- 다만 기능은 조금 제약적이다.
+  - 스토어드 프로그램의 커서는 전방향 읽기만 가능하다.
+  - 스토어드 프로그램에서는 커서의 컬럼을 바로 업데이트 하는 것이 불가능하다.
+  
+- 커서는 인센서티브 커서와 센서티브 커서로 구분 가능
+  - 센서티브 커서
+    - 센서티브 커서는 일치하는 레코드에 대한 정보를 실제 레코드의 포인터 만으로 유지하는 형태
+    - 커서를 이용해 컬럼의 데이터를 변경하거나 삭제하는 것이 가능
+  - 인센서티브 커서
+    - 일치하는 레코드를 별도의 임시 테이블로 복사해서 가지고 있는 형태
+    - 인센서티브 커서는 select 쿼리에 부합되는 결과를 복사해야 하기 때문에 느리다.
+
+- 정의된 커서를 open 하면 실제로 쿼리가 실행되고 결과를 가져온다.
+- 오픈된 커서는 패치 명령으로 레코드 단위로 읽어서 사용할 수 있다.
+- 완료된 후에는 close 명령으로 커서를 닫아주면 자원이 모두 해제된다.
+
+## 11.3 스토어드 프로그램의 권한 및 옵션
+## 11.4 스토어드 프로그램의 참고 및 주의 사항
+
+### 11.4.1 한글 처리
+- 스토어드 프로그램의 소스 코드에 한글 문자열값을 사용해야 한다면 확인이 필요
+
+### 11.4.2 스토어드 프로그램과 세션 변수
+- 만약 스토어드 프로그램에서 세션(사용자) 변수를 사용할 경우, 세션 변수는 타입을 지정하지 않기 때문에 타입에 대해 안전하지 않다
+- 또한 커넥션이 남아 있는 상태에서는 그 값을 유지한채 남아 있기 때문에 적절한 초기화가 필요하다.
+  
+### 11.4.3 스토어드 프로시저와 재귀 호출
+- 스토어드 프로시저에서는 사용가능
+- 너무 많은 반복은 스택이 터져버릴 수 있다.
+- 최대 재귀 호출 횟수를 지정할 수 있음
+
+### 11.4.4 중첩된 커서 사용
+두개의 커서를 동시에 열어서 사용할 경우 예외 핸들링 부분에 주의해야 한다.
