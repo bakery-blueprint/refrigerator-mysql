@@ -1,7 +1,10 @@
 -- 1-1
 
 -- 1-2
-
+select *
+from dept_emp de
+where dept_no = 'd005'
+  and emp_no < 30000;
 
 
 -- 3
