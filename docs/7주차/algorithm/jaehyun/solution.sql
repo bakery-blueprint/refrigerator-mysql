@@ -2,7 +2,7 @@
 
 -- 1-2
 select *
-from dept_emp de
+from dept_emp
 where dept_no = 'd005'
   and emp_no < 30000;
 
