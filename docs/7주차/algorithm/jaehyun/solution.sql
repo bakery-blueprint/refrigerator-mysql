@@ -1,4 +1,8 @@
 -- 1-1
+select emp_no
+  from dept_emp
+ where ifnull(dept_no, '') = 'd005'
+   and emp_no + 1 - 1 < 30000;
 
 -- 1-2
 select emp_no
