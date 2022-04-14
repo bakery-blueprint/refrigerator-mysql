@@ -7,23 +7,23 @@
 <mapper namespace="mapper.ProductRepository">
 
   <select id="selectProductById" resultType="com.github.blueprint.refrigerator.mysql.Product">
-        SELECT prod_id
-              ,prod_name
-              ,prod_price
-        FROM products
-        WHERE prod_id = #{prodId}
-    </select>
+    SELECT prod_id
+    ,prod_name
+    ,prod_price
+    FROM products
+    WHERE prod_id = #{prodId}
+  </select>
 
   <select id="selectAllProducts" resultType="com.github.blueprint.refrigerator.mysql.Product">
-        SELECT prod_id
-              ,prod_name
-              ,prod_price
-        FROM products
-    </select>
+    SELECT prod_id
+    ,prod_name
+    ,prod_price
+    FROM products
+  </select>
 
   <insert id="insertProduct" parameterType="com.github.blueprint.refrigerator.mysql.Product">
-      INSERT INTO products (prod_name, prod_price)
-      VALUES (#{prodName}, #{prodPrice})
-    </insert>
+    INSERT INTO products (prod_name, prod_price)
+    VALUES (#{prodName}, #{prodPrice})
+  </insert>
 
 </mapper>
