@@ -138,6 +138,17 @@ RDBMS에서 레코드가 INSERT되거나 UPDATE 될 떄는 데이터 파일을 �
  
 인서트 버퍼에 임시로 저장돼 있는 인덱스 레코드 조각은 이후 백그라운드 스레드에 의해 병합되는데, 이 스레드를 인서트 버퍼 머지 스레드(Merge thread라고 한다.
  
+### MVCC(Multi Version Concirrency Control)
+
+일반적으로 레코드 레벨의 트랜잭션을 지원하는 DBMS가 제공하는 기능이며, MVCC의 가장 큰 목적은 잠금을 사용하지 않는 일관된 읽기를 제공하는데 있다. InnoDB는 언두 로그를 이용해 이 기능을 구현한다. 
+ 
+- 잠금 없는 일관된 일기(Non-locking consistent read)
+
+InnoDB에서 격리 수준이 SERIALIZABLE이 아닌 READ-UNCOMMITTED나 READ-COMMITTED 그리고 REPEATABLE_READ 수준인 경우 (일반적으로 레코드 레벨)
+ 
+INSERT와 연결되지 않은 순수한 읽기(SELECT) 작업은 다른 트랜잭션의 변경 작업과 관계없이 항상 잠금을 대기하지 않고 바로 실행된다.
+읽으려는 행이 실제로 lock이 걸려있어도 읽을 때는 undo영역에서 읽기 때문에 lock이 걸리든 말든 상관없이 이전 버전의 데이터를 읽을 수 있다. 
+ 
  
 ## References
 - https://junghyungil.tistory.com/m/135 
