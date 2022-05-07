@@ -164,6 +164,12 @@ MySQL 엔진은 MySQL 서버에서 스토리지 엔진을 제외한 나머지 �
 MySQL 엔진에서는 테이블 데이터 동기화를 위한 테이블 락 말고도 사용자의 필요에 맞게 사용할 수 있는 유저 락과 테이블 명에 대한 잠금을 위한 네임 락이라는 것도 제공한다.
 
 
+### 글로벌 락(GLOBAL LOCK)
+
+글로벌 락은 FLUSH TABLES WITH READ LOCK 명령으로만 획득할 수 있으며, MySQL에서 제공하는 잠금 가운데 가장 범위가 크다.
+
+한 세션에서 글로벌 락을 획득하면 다른 세션에서 SELECT를 제외한 대부분의 DDL문장이나 DML 문장을 실행하는 경우 글로벌 락이 해제될 때까지 해당 문장이 대기 상태로 남는다.
+
 ## References
 - https://junghyungil.tistory.com/m/135 
 - https://junghyungil.tistory.com/m/136
