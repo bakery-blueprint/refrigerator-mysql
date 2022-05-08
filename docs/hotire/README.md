@@ -193,6 +193,13 @@ GET_LOCK() 함수를 이용해 임의로 잠금을 설정할 수 있다.
 - 네임락은 명시적으로 획득하거나 해체할 수 있는 것이 아니고 RENAME TABLE tab_a TO tab_b같이 테이블의 이름을 변경하는 경우 자동으로 획득하는 잠금이다. 
 - RENAME TABLE 명령의 경우 원본 이름과 변경될 이름 두 개 모두 한꺼번에 잠금을 설정한다.
 
+### InnoDB 스토리지 엔진의 잠금
+
+-  MySQL에서 제공하는 잠금과는 별개로 스토리지 엔진 내부에서 레코드 기반의 잠금 방식을 탑재하고 있다.
+
+- INFORMATION_SCHEMA라는 데이터베이스에 존재하는 INNODB_TRX, INNODB_LOCKS, INNODB_LOCK_WAITS라는 테이블을 조인해서 조회하면 현재 어떤 트랜잭션이 어떤 잠금을 대기하고 있고,해당 잠금은 어느 트랜잭션이 가지고 있는지 확인할 수 있으며 장시간 잠금을 가지고 있는 클라이언트를 종료시키는 것도 가능하다.
+
+
 ## References
 - https://junghyungil.tistory.com/m/135 
 - https://junghyungil.tistory.com/m/136
