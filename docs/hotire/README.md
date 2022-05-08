@@ -170,6 +170,14 @@ MySQL 엔진에서는 테이블 데이터 동기화를 위한 테이블 락 말�
 
 한 세션에서 글로벌 락을 획득하면 다른 세션에서 SELECT를 제외한 대부분의 DDL문장이나 DML 문장을 실행하는 경우 글로벌 락이 해제될 때까지 해당 문장이 대기 상태로 남는다.
 
+### 테이블 락(TABLE LOCK)
+
+개별 테이블 단위로 설정되는 잠금이며, 명시적 또는 묵시적으로 특정 테이블의 락을 획득할 수 있다. 명시적으로는 LOCK TABLES table_name[ READ | WRITE ] 명령으로 특정 테이블의 락을 획득할 수 있다.
+
+명시적으로 획득한 잠금은 UNLOCK TABLES명령으로 잠금을 반납(해제)할 수 있다.
+
+InnoDB 테이블에서는 테이블 락이 설정되지만 대부분 데이터 변경(DML) 쿼리에서는 무시되고 스키마를 변경하는 쿼리(DDL)의 경우에만 영향을 미친다.
+
 ## References
 - https://junghyungil.tistory.com/m/135 
 - https://junghyungil.tistory.com/m/136
