@@ -218,15 +218,53 @@ GET_LOCK() 함수를 이용해 임의로 잠금을 설정할 수 있다.
 - 갭 락은 레코드 자체가 아니라 레코드와 바로 인접한 레코드 사이의 간격만을 잠그는 것을 의미한다.
 - 갭 락의 역할은 레코드와 레코드 사이의 간격에 새로운 레코드가 생성되는 것을 제어하는 것이다.
 
+갭 락은 READ_COMMITED 이하에서는 거의 발생하지 않고 REPEATABLE_READ 이상 격리 수준일 때에 주로 발생한다. 
+
+('거의'라고 한 이유는 외래 키 검사나 중복 키 검사할 때는 READ_COMMITED에서도 발생하기 때문이다.)
+
+이것은 실존하는 것이 아니라 개념일뿐이며, 넥스트 키 락의 일부로 사용된다.
+
 ### 넥스트 키 락
-- 레코드 락과 갭 락을 합쳐 놓은 형태의 잠금을 넥스트 키 락이라고 한다.
+- 레코드 락과 갭 락을 합쳐 놓은 형태의 잠금을 합쳐놓은 형태로 앞 또는 뒤에 있는 인덱스 레코드의 갭도 락을 건다.
 - 변경을 위해 검색하는 레코드에는 넥스트 키 락 방식으로 잠금이 걸린다.
 - InnoDB의 갭 락이나 넥스트 키 락은 바이너리 로그에 기록되는 쿼리가 슬레이브에서 실행될 때 마스터에서 만들어낸 결과와 동일한 결과를 만들어내도록 보장하는 것이 주 목적이다.
+
+ex) SELECT c1 FROM t WHERE c1 BETWEEN 10 AND 20 FOR UPDATE;
+    
+반드시 인덱스 레코드 사이에 있는 갭만 락을 거는 게 아니라 제일 앞 또는 뒤에 있는 인덱스 레코드의 갭도 락을 건다. 
+
+예를 들어 c1=10인 레코드 인덱스 바로 앞에 c1=8인 레코드 인덱스가 있는 상태라면, c1=9인 레코드를 insert 하려고 하면 막힌다. (그 갭에도 락이 걸려있기 때문에!)
+
+갭 잠금은 공존할 수 있습니다. 한 트랜잭션에 의해 취해진 갭 잠금은 다른 트랜잭션이 동일한 갭에 대해 갭 잠금을 취하는 것을 방지하지 않습니다
+
+- https://ktdsoss.tistory.com/382
+- https://www.letmecompile.com/mysql-innodb-lock-deadlock/
+- https://dev.mysql.com/doc/refman/5.6/en/innodb-locking.html#innodb-gap-locks
+
+생각해보면 어쩌면 당연하겠지만, Unqiue 인덱스의 unique 한 row를 찾을때는 gap lock이 설정되지 않습니다.
+
+~~~sql
+SELECT * FROM a_table WHERE id='taes' FOR UPDATE;
+## -> gap lock 설정되지 않음
+
+SELECT * FROM a_table WHERE name='김태성' FOR UPDATE;
+## -> name_number_unq_idx 에서 gap lock 설정 될 수 있음
+~~~
 
 ### 자동 증가 락(AUTO_INCREMENT lock)
 
 - AUTO_INCREMENT 락은 트랜잭션과 관계없이 INSERT나 REPLACE 문장에서 AUTO_INCREMENT 값을 가져오는 순간만 AUTO_INCREMENT 락이 걸렸다가 즉시 해제된다.
 
+### 인덱스와 잠금
+
+- InnoDB의 잠금은 레코드를 잠그는 것이 아니라 인덱스를 잠그는 방식으로 처리된다.
+- 즉, 변경해야 할 레코드를 찾기 위해 검색한 인덱스의 레코드를 모두 잠가야 한다.
+- 만약 테이블에 인덱스가 하나도 없다면 테이블을 풀 스캔하면서 작업을 한다. 이럴경우 테이블에 있는 모든 레코드를 잠그게되기 때문에 좋은 설계라 할 수 없다
+
+
+하나의 테이블에 update 문장이 실행되면 Mysql의 InnoDB는 인덱스로 사용된 컬럼의 값과 동일한 레코드 들에 락을 건다. 
+
+만약 인덱스가 없다면 해당 테이블의 레코드에 모두 락을 건다.
 
 ## References
 - https://junghyungil.tistory.com/m/135 
