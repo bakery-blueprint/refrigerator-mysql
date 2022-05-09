@@ -223,6 +223,10 @@ GET_LOCK() 함수를 이용해 임의로 잠금을 설정할 수 있다.
 - 변경을 위해 검색하는 레코드에는 넥스트 키 락 방식으로 잠금이 걸린다.
 - InnoDB의 갭 락이나 넥스트 키 락은 바이너리 로그에 기록되는 쿼리가 슬레이브에서 실행될 때 마스터에서 만들어낸 결과와 동일한 결과를 만들어내도록 보장하는 것이 주 목적이다.
 
+### 자동 증가 락(AUTO_INCREMENT lock)
+
+- AUTO_INCREMENT 락은 트랜잭션과 관계없이 INSERT나 REPLACE 문장에서 AUTO_INCREMENT 값을 가져오는 순간만 AUTO_INCREMENT 락이 걸렸다가 즉시 해제된다.
+
 
 ## References
 - https://junghyungil.tistory.com/m/135 
