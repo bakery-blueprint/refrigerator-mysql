@@ -224,6 +224,16 @@ GET_LOCK() 함수를 이용해 임의로 잠금을 설정할 수 있다.
 
 이것은 실존하는 것이 아니라 개념일뿐이며, 넥스트 키 락의 일부로 사용된다.
 
+- https://medium.com/daangn/mysql-gap-lock-%EB%8B%A4%EC%8B%9C%EB%B3%B4%EA%B8%B0-7f47ea3f68bc
+- https://dba.stackexchange.com/questions/237549/gap-locking-in-read-committed-isolation-level-in-mysql
+
+1. Repeatable Read 격리 수준 보장
+2. Replication 일관성 보장 (Binary Log Format = Statement 또는 Mixed)
+-> Read Committed에서 update name = 'a' where id between 1 ,3 / insert id 2 name 'b'
+update가 먼저 시작 insert가 먼저 끝날 수 있고 이로 인해 복제시 이상현상이 발생한다. 
+3. Foreign Key / 일관성 보장
+
+
 ### 넥스트 키 락
 - 레코드 락과 갭 락을 합쳐 놓은 형태의 잠금을 합쳐놓은 형태로 앞 또는 뒤에 있는 인덱스 레코드의 갭도 락을 건다.
 - 변경을 위해 검색하는 레코드에는 넥스트 키 락 방식으로 잠금이 걸린다.
@@ -242,6 +252,13 @@ ex) SELECT c1 FROM t WHERE c1 BETWEEN 10 AND 20 FOR UPDATE;
 - https://dev.mysql.com/doc/refman/5.6/en/innodb-locking.html#innodb-gap-locks
 
 생각해보면 어쩌면 당연하겠지만, Unqiue 인덱스의 unique 한 row를 찾을때는 gap lock이 설정되지 않습니다.
+
+- Primary Key와 Unique Index
+    - 쿼리의 조건이 1건의 결과를 보장하는 경우, Gap Lock은 사용되지 않고 Record Lock만 사용됨
+    - 쿼리의 조건이 1건의 결과를 보장하지 못하는 경우, Record Lock + Gap Lock이 동시에 사용됨 (레코드가 없거나, 여러 컬럼으로 구성된 복합 인덱스를 일부 컬럼만으로 WHERE 조건이 사용된 경우 포함)
+- Non-Unique Secondary Index
+    - 쿼리의 결과 대상 레코드 건수에 관계없이 항상 Record Lock + Gap Lock이 사용됨
+
 
 ~~~sql
 SELECT * FROM a_table WHERE id='taes' FOR UPDATE;
