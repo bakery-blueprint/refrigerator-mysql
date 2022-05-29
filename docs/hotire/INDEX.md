@@ -64,6 +64,20 @@ INSERT, UPDATE, DELETE 작업을 할 떄 인덱스 관리에 따르는 추가 �
 
 만약 12바이트의 키 값을 갖는다면 16*1024/(16+12) = 585 개수의 자식 노드를 갖는다.
 
+B-Tree 인덱스의 깊이는 상당히 중요하지만 직접적으로 제어할 방법이 없다.
+
+인덱스의 키 값이 증가할 경우, 하나의 인덱스 페이지에 담을 수 있는 인덱스 개수가 줄어들고 이로 인해 
+
+같은 레코드라도 깊이가 깊어져 디스크 IO가 늘어난다.
+
+하지만 아무리 대용량의 데이터베이스라도 B-Tree의 깊이(Depth)가 4~5 이상까지 깊어지는 경우는 거의 발생하지 않습니다.
+
+### Selectivity / Cardinality
+
+높을 수록 중복되는 값이 없다. 
+
+
+- ex) country 인덱스, country, city 조건 검색시 country Cardinality가 낮을 경우 city를 찾기 위해 불필요한 데이터를 가져오게된다.
 
 ### 옵티마이저 인덱스 판단 
 
@@ -75,6 +89,7 @@ INSERT, UPDATE, DELETE 작업을 할 떄 인덱스 관리에 따르는 추가 �
 
 
 - https://junghyungil.tistory.com/m/137
+- https://12bme.tistory.com/138
 
 
 ## 인덱스 팁
