@@ -91,6 +91,13 @@ B-Tree 인덱스의 깊이는 상당히 중요하지만 직접적으로 제어�
 - https://junghyungil.tistory.com/m/137
 - https://12bme.tistory.com/138
 
+### 인덱스 레인지 스캔
+
+인덱스 레인지 스캔은 검색해야 할 인덱스의 범위가 결정됐을 때 사용하는 방식이다. 
+
+루트 노드로부터 브랜치, 리프노드까지 원하는 시작점을 찾고 멈추는 지점까지 노드간의 링크를 이용해서 스캔하여 레코드를 반환한다. 
+
+
 
 ## 인덱스 팁
 
@@ -100,6 +107,7 @@ B-Tree 인덱스의 깊이는 상당히 중요하지만 직접적으로 제어�
 
 - https://enterone.tistory.com/230
 - https://kosaf04pyh.tistory.com/m/293
+- https://opentutorials.org/course/1555/8764
 
 
 
