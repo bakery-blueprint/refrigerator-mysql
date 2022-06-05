@@ -2,6 +2,20 @@
  
 ### Exclusive lock vs Shared lock
 
+Exclusive lock 베타적 잠금, 쓰기 잠금이라고 부른다.
+
+트랜잭션에서 데이터를 변경(쓰기)할 때 다른 트랜잭션에서 읽지 못하게 하기 위해 베타적 잠금을 건다. 
+- exclusive lock에 걸리면 shared lock을 걸 수 없다.
+
+반면 Shared lock 공유 잠금(읽기 잠금)은 다른 트랜잭션 shared lock도 걸수가 있다.
+
+동시에 읽을수 있지만 변경을 불가능하다.
+
+- 어떤 자원에 shared lock이 동시에 여러개 적용될 수 있다.
+- 어떤 자원에 shared lock이 하나라도 걸려있으면 exclusive lock을 걸 수 없다.
+
+
+래퍼런스 
 - https://jeong-pro.tistory.com/94
 - https://www.letmecompile.com/mysql-innodb-lock-deadlock/
 - https://kimdubi.github.io/mysql/insert_on_duplicate_lock/
@@ -135,11 +149,21 @@ SELECT * FROM a_table WHERE name='김태성' FOR UPDATE;
 만약 인덱스가 없다면 해당 테이블의 레코드에 모두 락을 건다.
 
 
-### 데드락 
+## 데드락 
 
 - https://happyer16.tistory.com/entry/MySQL-12%EC%9E%A5-%EC%BF%BC%EB%A6%AC-%EC%A2%85%EB%A5%98%EB%B3%84-%EC%9E%A0%EA%B8%88
 - https://jinhokwon.github.io/devops/mysql-deadlock/
+- https://dev.mysql.com/doc/refman/5.6/en/innodb-locks-set.html
 
 1. 상호 거래 패턴 : A, B 가 서로 동시에 포인트 선물을 하고 차감 , 증가 순으로 처리한다. -> 해결 user id 순으로 처리한다. 
-2. 유니크 인덱스 : 트랜잭션 1번이 insert 쓰기 잠금을 얻는다. 이후 트랜잭션 2번, 3번이 동일한 키 쓰기를 하려고 할 떄 공유 락을 얻는다. 
 
+### 2. 유니크 인덱스 
+ 
+트랜잭션 1번이 insert 쓰기 잠금을 얻는다. 이후 트랜잭션 2번, 3번이 동일한 키 쓰기를 하려고 할 떄 공유 락을 얻는다. 
+
+
+세션 1의 첫 번째 작업은 행에 대한 단독 잠금을 획득합니다. 세션 2와 3의 작업은 모두 중복 키 오류를 발생시키고 둘 다 행에 대한 공유 잠금을 요청합니다. 
+
+세션 1이 롤백되면 행에 대한 배타적 잠금이 해제되고 세션 2 및 3에 대해 대기 중인 공유 잠금 요청이 승인됩니다. 
+
+이 시점에서 세션 2 및 3 교착 상태: 다른 쪽이 보유하고 있는 공유 잠금 때문에 어느 쪽도 행에 대한 배타적 잠금을 획득할 수 없습니다.
