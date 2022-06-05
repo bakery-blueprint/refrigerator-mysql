@@ -164,24 +164,6 @@ MySQL에서는 인덱스 없이 유니크 제약만 설정할 방법이 없다.
 
 - https://m.blog.naver.com/parkjy76/220639066476
 
-
-### 데드락 
-
-- https://happyer16.tistory.com/entry/MySQL-12%EC%9E%A5-%EC%BF%BC%EB%A6%AC-%EC%A2%85%EB%A5%98%EB%B3%84-%EC%9E%A0%EA%B8%88
-- https://jinhokwon.github.io/devops/mysql-deadlock/
-
-1. 상호 거래 패턴 : A, B 가 서로 동시에 포인트 선물을 하고 차감 , 증가 순으로 처리한다. -> 해결 user id 순으로 처리한다. 
-2. 유니크 인덱스 : 트랜잭션 1번이 insert 쓰기 잠금을 얻는다. 이후 트랜잭션 2번, 3번이 동일한 키 쓰기를 하려고 할 떄 공유 락을 얻는다. 
-
-
-
-### Exclusive lock vs Shared lock
-
-- https://jeong-pro.tistory.com/94
-- https://www.letmecompile.com/mysql-innodb-lock-deadlock/
-- https://kimdubi.github.io/mysql/insert_on_duplicate_lock/
-- https://kukuta.tistory.com/215
-
 ## 인덱스 팁
 
 - https://jojoldu.tistory.com/243
