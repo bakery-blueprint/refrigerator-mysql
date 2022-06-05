@@ -165,8 +165,6 @@ MySQL에서는 인덱스 없이 유니크 제약만 설정할 방법이 없다.
 - https://m.blog.naver.com/parkjy76/220639066476
 
 
-
-
 ### 데드락 
 
 - https://happyer16.tistory.com/entry/MySQL-12%EC%9E%A5-%EC%BF%BC%EB%A6%AC-%EC%A2%85%EB%A5%98%EB%B3%84-%EC%9E%A0%EA%B8%88
