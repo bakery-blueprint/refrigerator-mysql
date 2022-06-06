@@ -39,6 +39,42 @@ CBO에서 가장 중요한 것은 통계 정보이다. 통계 정보가 정확�
 ANALYZE 을 통해 강제로 업데이트 할 수 있지만, 도중 쓰기와 읽기가 불가능하기 때문에 실핼할수 없다.
 
 
+## 분석 
+
+EXPLAIN 
+
+- EXPLAIN EXTENDED : MySQL Optimizer에 의해서 최종적으로 어떻게 쿼리가 변환되었는지를 알 수 있다.
+- EXPLAIN PARTITIONS : 테이블의 파티션중 어떤 파티션을 사용했는 지 알 수 있다.
+
+
+### 1. ID
+
+쿼리 별로 부여되는 식별자의 값
+
+### 2. select_type
+
+SELECT 쿼리가 어떤 타입의 쿼리인지 표시되는 칼럼
+
+- SIMPLE : UNION이나 서브 쿼리를 사용하지 않는 단순 SELECT쿼리인 경우에 표시된다. (단 하나만 존)
+
+- PRIMARY : UNION이나 서브 쿼리가 포함된 SELECT 쿼리의 실행 계획에서 가장 바깥쪽 쿼리는 select_type이 PRIMARY로 표시된다. (단 하나만 존재)
+
+- UNION : UNION으로 결합하는 단위 SELECT 쿼리 가운데 첫 번째를 제외한 두 번째이후 SELECT 쿼리의 select_type은 UNION으로 표시된다.
+
+- UNION RESULT : UNION의 결과를 담아두는 테이블을 의미한다 (임시테이블)
+
+- SUBQUERY : FROM 절 이외에서 사용되는 서브 쿼리만을 의미한다.
+
+- DERIVED :  FROM 절에 사용된 서브 쿼리을 의미한다.
+
+- INSERT : inset 시 
+
+- UPDATE : update 시 
+
+- DELETE: DELETE 시 
+
+            
+
 
 
 
@@ -49,3 +85,4 @@ ANALYZE 을 통해 강제로 업데이트 할 수 있지만, 도중 쓰기와 �
 ## References
 
 - https://weicomes.tistory.com/145?category=669169
+- https://weicomes.tistory.com/154
