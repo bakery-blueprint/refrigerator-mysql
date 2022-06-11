@@ -88,14 +88,23 @@ SELECT 쿼리가 어떤 타입의 쿼리인지 표시되는 칼럼
 - const: 쿼리가 프라이머리 키나 유티크 키 칼럼을 이용하여 반드시 1건을 반환하는 쿼리의 처리방식이다.
 - eq_ref : 여러 테이블이 조인되는 쿼리에서 처음 테이블이 두번쨰 테이블의 프라이머리 키나 유니크 키 칼럼 조건으로 사용됨
 - ref : 프라이머리 키나 유티크 키가 아닌 일반적인 인덱스 
-- fulltext : 
-- ref_or_null
-- unique_subquery
-- index_subquery
-- range
-- index_merge
-- index
-- ALL
+- fulltext : MySQL 전문 검색(Fulltext) 인덱스를 사용해 레코드를 읽는 접근 방법
+- ref_or_null : ref 접근 방식과 같은데 NULL 비교가 추가된 형태다. 말 그대로 or 조건에 null
+- unique_subquery : in절에 사용하는 subquery가 중복되지 않는 유니크 값만 반환된 경우 
+- index_subquery : in절에 사용하는 subquery가 중복된 값이 있어서 인덱스를 이용해 중복을 제거함 
+- range : 인덱스 레인지 스캔 형태이다. "<, >, IS NULL, BETWEEN, IN, LIKE"등의 연산자로 인덱스를 검색할 때 사용된다. 생각보다 우선순위가 낮지만 어느정도 성능은 보장된다.
+- index_merge : 2개 이상의 인덱스를 이용해 각각의 검색 결과를 만든 후 그 결과를 병합하는 처리 방식이다.       
+- index :  인덱스를 처음부터 끝까지 읽는 인덱스 풀 스캔을 의미한다.
+- ALL : 풀 테이블 스캔을 의미하는 접근 방식이다. 한번에 Read Ahead 기능을 통해 한꺼번에 여러 페이지를 읽어드린다.
+
+index 접근 방식은 풀 스캔 방식과 레코드 건수는 같다. 하지만 인덱스는 데이터 전체 파일보다는 크기가 작아 풀 테이블 스캔보다 효율적이고 빠르다
+
+range 나 const 또는 ref 방식으로 인덱스를 사용하지 못하는 상황에서 인덱스에 포함된 칼럼으로만 처리가 가능하거나, 인덱스를 이용해 정렬이나 그룹핑 작업이 가능한 경우
+
+index 방식이 사용된다.
+
+
+
 
 위에서 아래 순서로 느려진다.
 
@@ -112,3 +121,4 @@ SELECT 쿼리가 어떤 타입의 쿼리인지 표시되는 칼럼
 
 - https://weicomes.tistory.com/145?category=669169
 - https://weicomes.tistory.com/154
+- https://weicomes.tistory.com/149?category=669169
