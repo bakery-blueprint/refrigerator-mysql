@@ -43,7 +43,7 @@ ANALYZE 을 통해 강제로 업데이트 할 수 있지만, 도중 쓰기와 �
 
 EXPLAIN 
 
-- EXPLAIN EXTENDED : MySQL Optimizer에 의해서 최종적으로 어떻게 쿼리가 변환되었는지를 알 수 있다.
+- EXPLAIN EXTENDED : MySQL Optimizer에 의해서 최종적으로 어떻게 쿼리가 변환되었는지를 알 수 있다. 
 - EXPLAIN PARTITIONS : 테이블의 파티션중 어떤 파티션을 사용했는 지 알 수 있다.
 
 
@@ -129,6 +129,51 @@ index 방식이 사용된다.
 
 ### 10. Extra
 
+성능에 관련된 내용을 보여준다.
+
+- const row not found : const 접근 방식으로 테이블을 읽었지만 해당 테이블에 레코드가 1건도 존재 하지 않는 경우
+- Distinct : Distinct 사용시
+- Full scan on NULL key : column IN (subquery) 같은 상황에서 column이 null 이 올 경우 Full scan을 할 수도 있다는 것을 의미한다. null이 알수 없는 값으로 정의한다.
+- Impossible HAVING : HAVING 절의 조건을 만족하는 레코드가 없을 때 
+- Impossible WHERE : WHERE 조건이 항상 FALSE가 될 수밖에 없는 경우
+- Impossible WHERE noticed after reading const tables: 쿼리 플랜만으로 레코드가 없다는 것을 아는 경우
+- 잡다한게 있지만... 
+- Using filesort : ORDER BY 인덱스를 사용하지 못하는 경우
+- !! Using index(커버링 인덱스) : 데이터 파일을 전혀 읽지 않고 인덱스만 읽어서 쿼리를 모두 처리할 수 있을 때
+- Using index for group-by : GROUP BY 처리에 인덱스를 사용할 경우 
+- Using temporary : 정렬하거나 그룹핑을 위해 임시, 가상테이블 생성 
+- Range checked for each record (index map: N) : 레코드 읽을 때마다 쿼리 계산 기준 값이 바뀌는 경우, 조인 조건이 <, >
+- !! Using where  : 각 스토리지 엔진은 디스크나 메모리상에서 필요한 레코드를 읽거나 저장하는 역할을 하며, MySQL 엔진은 스토리지 엔진으로부터 받은 레코드를 가공 또는 연산하는 작업을 수행한다. 
+MySQL 엔진 레이어에서 별도의 가공을 해서 필터링(여과) 작업을 처리한 경우에만 Extra 칼럼에 "Using where" 코멘트가 표시된다.
+스토리지 엔진으로 인덱스로 검색 이후, MySQL 엔진으로 필터링 하는 경우이다. 인덱스를 효율적으로 만들면 MySQL 엔진으로 필터링이 없어서 더 빠르다.
+- Using join buffer : 드라이빙 테이블에서 일치하는 레코드 수만큼 드리븐 테이블 검색하며 처리한다.
+드리븐 테이블 레코드의 결과가 항상 같다면 join buffer 메모리에 캐시해두고 사용하게 된다.
+드리븐 테이블의 풀 테이블 스캔이나 인덱스 풀 스캔을 피할 수 없다면 옵티마이저는 드라이빙 테이블에서 읽은 레코드를 메모리에 캐시한 후 드리븐 테이블과 이 메모리 캐시를 조인하는 형태로 조인한다.                        
+
+
+
+## 풀 테이블 스캔
+
+리드 어헤드를 통해 한번에 여러 페이지를 읽을 수 있다.
+
+## 카테시안 조인 
+
+카테시안 조인은 FULL JOIN 또는 CROSS JOIN이라 부른다.
+
+이 조인 조건 자체가 없이 2개 테이블의 모든 레코드 조합을 결과로 가져오는 조인 방식이다. 
+
+
+## NESTED LOOP JOIN (네스티드-루프 조인)  드라이빙, 드리븐 테이블 
+
+https://devuna.tistory.com/36
+
+- 드라이빙:  JOIN시 먼저 액세스 돼서 ACCESS PATH를 주도하는 테이블을 드라이빙테이블이라고 한다.
+- 드리븐 : JOIN시 나중에 액세스 되는 테이블을 드리븐 테이블(DRIVEN TABLE, INNER TABLE)
+  
+작업 대상이 되는 행(rows)의 수가 적은 테이블부터 액세스 되어야 전체 탐색이 줄어든다.
+
+- 두 칼럼 모두 각각 인덱스가 있는 경우 : 건수가 적은 테이블이 드라이빙 테이블이 된다.
+- 한쪽에만 인덱스가 있는 경우 : 인덱스 없는 테이블을 드라이빙 테이블이 된다.
 
 
 
@@ -141,3 +186,5 @@ index 방식이 사용된다.
 - https://weicomes.tistory.com/145?category=669169
 - https://weicomes.tistory.com/154
 - https://weicomes.tistory.com/149?category=669169
+- https://velog.io/@jsj3282/26.-MySQL-%EC%8B%A4%ED%96%89-%EA%B3%84%ED%9A%8D-%EC%8B%A4%ED%96%89-%EA%B3%84%ED%9A%8D-%EB%B6%84%EC%84%9D4
+- https://velog.io/@jsj3282/27.-MySQL-%EC%8B%A4%ED%96%89-%EA%B3%84%ED%9A%8D-%EC%8B%A4%ED%96%89-%EA%B3%84%ED%9A%8D-%EB%B6%84%EC%84%9D5
