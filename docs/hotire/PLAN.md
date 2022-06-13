@@ -13,6 +13,7 @@
 MySQL 엔진(SQL 파서, 옵티마이저, 실행기)에서 처리되고, 마지막 "데이터 읽기/쓰기" 작업만 스토리지 엔진에 의해 처리된다.
 
 
+
 ## 종류 
 
 예전에 통계정보가 없고 느린 CPU로 COST 연산이 부담스러웠을 때 사용했던 방식이 RBO이고 
@@ -38,6 +39,17 @@ CBO에서 가장 중요한 것은 통계 정보이다. 통계 정보가 정확�
 
 ANALYZE 을 통해 강제로 업데이트 할 수 있지만, 도중 쓰기와 읽기가 불가능하기 때문에 실핼할수 없다.
 
+## 실행 순서 
+
+1. FROM
+2. ON
+3  JOIN
+4. WHERE
+5. GROUP BY
+6. HAVING
+8. SELECT 
+9. DISTINCT
+10. ORDER BY
 
 ## 분석 
 
@@ -72,6 +84,16 @@ SELECT 쿼리가 어떤 타입의 쿼리인지 표시되는 칼럼
 - UPDATE : update 시 
 
 - DELETE: DELETE 시 
+
+- UNCACHEABLE SUBQUERY: 캐싱되지 못하는 서브쿼리 (변수, 함수 사용으로 인한)
+
+- DEPENDENT SUBQUERY :  의존적 서브쿼리로, 서브쿼리가 드라이빙되지 못하고 드리븐 되는 문
+    
+
+서브 쿼리 관련 select_type 나온다면 주의 대상이다. 
+
+DERIVED / UNCACHEABLE SUBQUERY / DEPENDENT SUBQUERY 
+
 
 
 ### 3. table
@@ -175,16 +197,95 @@ https://devuna.tistory.com/36
 - 두 칼럼 모두 각각 인덱스가 있는 경우 : 건수가 적은 테이블이 드라이빙 테이블이 된다.
 - 한쪽에만 인덱스가 있는 경우 : 인덱스 없는 테이블을 드라이빙 테이블이 된다.
 
+## 조인 관련 주의 사항
+"실행 결과의 정렬 순서"
+- 드라이빙, 드리빙 테이블이 달라질 수 있어서, 옵티마이저에 의한 정렬을 피하는게 좋다.
 
 
+## Query Plan 주의 사항
+
+https://velog.io/@jsj3282/34.-MySQL-%EC%8B%A4%ED%96%89-%EA%B3%84%ED%9A%8D-%EC%8B%A4%ED%96%89-%EA%B3%84%ED%9A%8D-%EB%B6%84%EC%84%9D-%EC%8B%9C-%EC%A3%BC%EC%9D%98%EC%82%AC%ED%95%AD
+
+### Where, GROUP BY,  ORDER BY
+
+SQL 문장이 WHERE 절과 ORDER BY 절을 가진다면, WHER 조건은 A 인덱스를 사용하고 ORDER BY는 B인덱스를 사용하는 것은 불가능하다.
+
+### GROUP BY와 ORDER BY
+
+GROUP BY 절에 명시된 칼럼과 ORDER BY에 명시된 칼럼이 순서와 내용이 모두 같아야 한다.
+
+1. WHERE 절이 인덱스를 사용할 수 있는가? yes 일 경우 2번으로 
+2. GROUP BY 절이 인덱스를 사용할 수 있는가? yes 일 경우 3번으로 
+3. GROUP BY 절과 ORDER BY 절이 동시에 인덱스를 사용할 수 있는가? 
+
+case : 
+- where, group by, ORDER BY 전부 사용 
+- where 절 index만 사용
+- group by, ORDER BY 사용 
+- 인덱스 없음 
+
+
+### LIMIT
+
+LIMIT는 WHERE 조건이 아니기 때문에 항상 쿼리의 가장 마지막에 실행된다.
+
+LIMIT의 중요한 특성은 LIMIT에서 필요한 레코드 건수만 준비되면 바로 쿼리를 종료시킨다는 것이다. 
+
+즉 위의 레코드의 정렬이 완료되지 않았다 하더라도 상위 5건까지만 정렬이 되면 작업을 멈춘다는 것이다.
+
+- GROUP BY : GROUP BY 전부 완료해야 LIMIT 효과가 있어서, LIMIT의 이점이 없다.
+- DISTINCT : DISTINCT 하면서 LIMIT 개수를 채우면 종료된다. 
+- ORDER BY : 정렬하면서 LIMIT 개수가 차면 종료한다. 하지만 정렬 특성상 크게 이점은 없다.
+
+
+### Index 
+
+- 인덱스 탐색 (index seek) : 인덱스에서 조건을 만족하는 값이 저장된 위치 검색
+- 인덱스 스캔 (index scan) : 탐색된 위치부터 필요한 만큼 인덱스를 쭉 스캔
+
+
+인덱스 레인지 스캔은 인덱스 탐색 과정이 부하가 있는 편이지만, 데이터가 소량일 경우 스캔 과정은 작다.
+인덱스 풀스캔, 테이블 풀 스캔은 탐색은 없지만 스캔 부하가 심하다.
+
+조인 작업에서 드라이빙 테이블을 읽을 때는 인덱스 탐색 작업을 단 한 번만 수행하고, 
+그 이후부터는 스캔만 실행하면 된다. 하지만 드리븐 테이블에서는 인덱스 탐색/스캔 작업을 드라이빙 테이블에서 읽은 레코드 건수만큼 반복한다. (NESTED LOOP JOIN)
+
+### ANTI JOIN
+
+두 개의 테이블에서 한쪽 테이블에서는 있지만 다른 테이블에 없는 레코드를 검색할 때 ANTI JOIN을 사용한다. 
+
+조인 하고 id is null
+
+### 지연된 조인(Delayed Join) 
+
+지연된 조인이란 조인이 실행되기 이전에 GROUP BY나 ORDER BY를 처리하는 방식을 의미한다.
+
+### GROUP BY
+
+그룹키가 아닌 컬럼도 사용이 가능하지만 랜덤 값이 사용된다. FULL GROUP-BY 그룹키가 아닌 컬럼은 집합 함수로만 사용하는 모드
+
+- GROUP BY 절 칼럼에 정렬 순서 명시 가능 
+
+### ORDER BY
+
+- 인덱스를 사용한 SELECT의 경우에는 인덱스의 정렬된 순서대로 레코드를 가져온다.
+
+- SELECT 쿼리가 임시 테이블을 거쳐서 처리되면 조회되는 레코드의 순서는 예측하기는 어렵다.
+
+즉 ORDER BY 절이 없는 SELECT 쿼리 결과의 순서는 처리 절차에 따라 달라질 수 있다
+ 
+ 
 
 
  
 
+
+## 파티션
+
+https://velog.io/@jsj3282/39.-%ED%8C%8C%ED%8B%B0%EC%85%98-%EA%B0%9C%EC%9A%94
+
 ## References
 
 - https://weicomes.tistory.com/145?category=669169
-- https://weicomes.tistory.com/154
-- https://weicomes.tistory.com/149?category=669169
-- https://velog.io/@jsj3282/26.-MySQL-%EC%8B%A4%ED%96%89-%EA%B3%84%ED%9A%8D-%EC%8B%A4%ED%96%89-%EA%B3%84%ED%9A%8D-%EB%B6%84%EC%84%9D4
-- https://velog.io/@jsj3282/27.-MySQL-%EC%8B%A4%ED%96%89-%EA%B3%84%ED%9A%8D-%EC%8B%A4%ED%96%89-%EA%B3%84%ED%9A%8D-%EB%B6%84%EC%84%9D5
+- https://weicomes.tistory.com/276?category=669169
+- https://velog.io/@jsj3282/33.-MySQL-%EC%8B%A4%ED%96%89-%EA%B3%84%ED%9A%8D-MySQL%EC%9D%98-%EC%A3%BC%EC%9A%94-%EC%B2%98%EB%A6%AC-%EB%B0%A9%EC%8B%9D5
