@@ -151,38 +151,32 @@ InnoDB에서 격리 수준이 SERIALIZABLE이 아닌 READ-UNCOMMITTED나 READ-CO
 INSERT와 연결되지 않은 순수한 읽기(SELECT) 작업은 다른 트랜잭션의 변경 작업과 관계없이 항상 잠금을 대기하지 않고 바로 실행된다.
 읽으려는 행이 실제로 lock이 걸려있어도 읽을 때는 undo영역에서 읽기 때문에 lock이 걸리든 말든 상관없이 이전 버전의 데이터를 읽을 수 있다. 
 
-## 트랜잭션
 
-- 작업의 단위 
+## AUTO_INCREMENT
 
-## 트랜잭션 격리 수준(isolation Level)
+### AUTO_INCREMENT 강제로 지정할 경우 
 
-- https://jupiny.com/2018/11/30/mysql-transaction-isolation-levels/
+- 강제 지정한 값이 AUTO_INCREMENT의 현재 값보다 작을 경우 : AUTO_INCREMENT의 현재 값이 변하지 않는다.
 
-ACID 원자성(Atomicity), 일관성(Consistency), 격리성(Isolation), 지속성(Durability)
+- 강제 지정한 값이 AUTO_INCREMENT의 현재 값보다 큰 경우 : AUTO_INCREMENT의 현재 값이 얼마였든지 관계없이 강제로 저장된 값에 1을 더한 값이 AUTO_INCREMENT 의 다음 값으로 변경된다.
 
-### READ UNCOMMITTED
+- 강제 지정한 값이 AUTO_INCREMENT의 현재 값보다 작은 경우 : AUTO_INCREMENT의 현재 값이 변하지 않는다.
+                                           
+### AUTO_INCREMENT 잠금
 
-커밋하기 전에 읽을 수 있다.
-"DIRTY READ"라고도 하는 READ UNCOMMITTED는 일반적인 데이터베이스에서는 거의 사용하지 않는다.
+MySQL 에서는 AutoIncrement 잠금이라는 테이블 단위의 잠금을 사용한다.
 
-### READ COMMITTED
+AutoIncrement 잠금은 반드시 하나의 커넥션만 가질 수 있다는 것을 의미한다.
 
-커밋된 데이터를 읽을 수 있다. 
+AutoIncrement 잠금은 AUTO_INCREMENT의 현재 값을 가져올 때만 잠금이 걸렸다가 즉시 해제된다. 
 
-NON-REPEATABLE READ	발생한다. (트랜잭션 안에서 같은 select의 결과가 일치하지 않는다.)
+Rollback이 되더라도 원래의 값으로 돌아가지 않는다.
 
-### REPEATABLE READ
+### AUTO_INCREMENT 증가 값 가져오기
 
-- SELECT시 현재 시점의 스냅샷을 만들고 스냅샷을 조회한다.
-- 동일 트랜잭션 내에서 일관성을 보장한다.
+- LAST_INSERT_ID()
 
-PHANTOM READ 발생한다. (InnoDB 발생하지 않음) 넥스크 키락 
-
-### SERIALIZABLE
-
-SELECT 문에 사용하는 모든 테이블에 shared lock이 발생한다.
-
+- SELECT MAX() 사용시 다른 커넥션에서 증가된 AUTO_INCREMENT 값까지 가져올수 있다.
 
 
 ## References
